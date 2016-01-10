@@ -1,0 +1,137 @@
+Raduino
+=======
+A C based programming with Arduino look alike syntax for
+Raspberry Pi. This are simple baremetal programming
+libraries like Arduino for Raspberry Pi 2. Yes we can use direct
+C++ instead of this for development, but it is done in C because
+to have fun with all macro magic and linker (actually I do not know
+C++ :)). This is in very initial stage with GPIO, Serial and String
+libraries (not fully implemented).
+Lets see how Arduino code and Raduino code looks:
+
+Arduino:
+++++++++
+
+void setup()
+{
+	pinMode(13, OUTPUT);
+	Serial.begin(115200);
+}
+
+void loop()
+{
+		digitalWrite(13, HIGH);
+		Serial.println("Get lost..You suck at coding");
+		delay(1000);
+		digitalWrite(13, LOW);
+		delay(1000);
+}
+
+Raduino:
+++++++++
+
+#define "gpio.h"
+#define "uart.h"
+
+OBJECT(Serial, s1);
+
+void setup()
+{
+	pinMode(13, OUTPUT);
+	s1.begin(115200);
+}
+
+void loop()
+{
+		digitalWrite(13, HIGH);
+		/* using printf as of now */
+		s1.printf("Get lost..You suck at coding\r\n");
+		delay(); /* delay() is close to 1 sec as of now */
+		digitalWrite(13, LOW);
+		delay();
+}
+
+How it works:
+-------------
+
+-> Initial assembly code which is run at start is changed to call setup()
+	function once and call loop() infinitely.
+-> Before calling setup() C run time environment is setup:
+	- Stack pointer setup
+	- c_startup function(in startup.c) clears BSS and initializes objects
+	  for a class. Let us take a closer look at Classes and Objects here.
+		The macros OBJECT and CLASS(used by library code) expands such that
+		s1 gets placed in objects section, Serial has Serial_name structure
+		(internally) variable which gets placed in classes section in memory.
+		Each Class and Object are placed such that they are aligned to 4 byte
+		boundary. This alignment is used to get to next Class/Object variable in
+		memory.
+			next_class  = roundup(class_start + sizeof(Class), ALIGNMENT);
+			next_object = roundup(obj_start + obj->size, ALIGNMENT);
+		One Class variable is taken and initialization function of all objects
+		for that Class are called. This is process repeated for all Classes.
+		If application uses like below:
+			OBJECT(Serial, ser); 
+			OBJECT(String, s1);
+		then ser is checked if it belongs to Serial or String(name comparison)
+		and if yes intialization function of ser is called(which initializes its
+		members). Have a look at startup.c, object.h, uart.c and string.h for
+		understanding.
+
+So to write a new module/component(whatever you call) all you just to need
+to do is declare you structure(say Lcd) in a header file,
+
+typedef struct
+{
+	Object obj; /* this is required and do not touch it */
+
+	/* your variables and routines */
+	void (*begin)(void);
+} Lcd;
+
+and in C file,
+
+static void lcd_begin(void)
+{
+	/* your code for lcd initialization */
+}
+
+static void Lcd_init(void *object)
+{
+		Lcd *lcd = object;
+
+		lcd->begin = lcd_begin;
+}
+
+CLASS(Lcd, Lcd_init);
+
+in application user can use:
+OBJECT(Lcd, lcd);
+
+and call Lcd.begin();
+
+Pitfalls
+--------
+
+OBJECTs cannot be used as local variables.
+Calling functions with different type of arguments is not possible.
+Functions has to be called with structure variable pointer(eg: String).
+
+This is intial effort and I will keep updating to make it more like Arduino
+program.
+
+Credits
+-------
+I have to thank all the guys who spent time in writing blogs and 
+bare metal code for Raspberry Pi and ARM processor.
+	David Welch (https://github.com/dwelch67/raspberrypi)
+	Brian_S (http://www.valvers.com/open-software/raspberry-pi)
+	Kustaa Nyholm /SpareTimeLabs (printf function is taken from Kustaa Nyholm
+									as of now)
+			http://www.sparetimelabs.com/tinyprintf/tinyprintf.php
+
+I am really looking forward for others to contribute for rest of the peripherals
+if interested :).
+
+Thanks,
+Sundeep

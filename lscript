@@ -1,0 +1,53 @@
+
+MEMORY
+{
+    ram : ORIGIN = 0x8000, LENGTH = 0x100000
+}
+
+SECTIONS
+{
+    .text : 
+	{
+		*(.text)
+	} > ram
+
+    .bss : 
+	{ 
+		. = ALIGN(4);
+		bss_start = .;
+		*(.bss) 
+	} > ram
+
+	bss_end = .;
+	bss_size = SIZEOF(.bss);
+
+    .rodata :
+	{ 
+		. = ALIGN(4);
+		*(.rodata) 
+	} > ram
+
+    .data : 
+	{
+		. = ALIGN(4);
+		*(.data)
+	} > ram
+
+	classes :
+	{
+		. = ALIGN(4);
+		classes_start = .;	
+		*(classes)
+	} > ram
+
+	objects :
+	{
+		. = ALIGN(4);
+		classes_end = .;	/* Always end address should be aligned */
+		objects_start = .;	
+		*(objects)
+	} > ram
+
+	. = ALIGN(4);
+	objects_end = .;	/* Always end address should be aligned */
+}
