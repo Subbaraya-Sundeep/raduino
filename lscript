@@ -8,6 +8,7 @@ SECTIONS
 {
     .text : 
 	{
+		crt0.o (.text*)
 		*(.text)
 	} > ram
 

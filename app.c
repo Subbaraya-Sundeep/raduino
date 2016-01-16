@@ -19,9 +19,9 @@
  * THE SOFTWARE.
  */
 
-#include "uart.h"
-#include "gpio.h"
-#include "string.h"
+#include <uart.h>
+#include <gpio.h>
+#include <string.h>
 
 OBJECT(Serial, Serial1);
 OBJECT(String, s1);
@@ -59,6 +59,7 @@ void loop()
 	Serial1.printf("int from bss %d\r\n", i);
 	Serial1.printf("%s\r\n", s1.buffer);
 	Serial1.printf("%s\r\n", s2.buffer);
+	digitalWrite(ACTIVE, HIGH);
 	delay();
 	s1.clear(&s1);
 	s2.clear(&s2);
@@ -69,4 +70,6 @@ void loop()
 	s2.append(&s2, "Added again to s2");
 	Serial1.printf("%s\r\n", s1.buffer);
 	Serial1.printf("%s\r\n", s2.buffer);
+	digitalWrite(ACTIVE, LOW);
+	delay();
 }

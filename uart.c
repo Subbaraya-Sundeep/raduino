@@ -19,8 +19,8 @@
  * THE SOFTWARE.
  */
 
-#include "uart.h"
-#include "printf.h"
+#include <uart.h>
+#include <printf.h>
 
 #define write(x) _Generic((x),				\
 					unsigned char: write_char, 	\

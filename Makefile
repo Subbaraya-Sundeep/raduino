@@ -1,13 +1,23 @@
+TARGET := app
+C_SRCS := $(wildcard *.c)
+A_SRCS := $(wildcard *.s)
+C_OBJS := ${C_SRCS:.c=.o}
+C_OBJS += ${A_SRCS:.s=.o}
 
-ARMGNU ?= arm-none-eabi
+INCLUDE_DIRS := ./include
+CC := arm-xilinx-eabi-gcc
+AS := arm-xilinx-eabi-as
+OBJCOPY := arm-xilinx-eabi-objcopy
+OBJDUMP := arm-xilinx-eabi-objdump
 
-AOPS = --warn --fatal-warnings
-COPS = -Wall -O2 -nostdlib -nostartfiles -ffreestanding -std=c11 -lgcc
-LOPS = -L/home/sundeep/lin/lib/gcc/arm-none-eabi/4.9.2/ -lgcc
+CPPFLAGS += $(foreach includedir,$(INCLUDE_DIRS),-I$(includedir))
+CFLAGS += -Wall -O2 -nostdlib -nostartfiles -ffreestanding -std=c11 -lgcc
+ASFLAGS += --warn --fatal-warnings
 
-gcc : app.hex app.bin
+all: $(TARGET).elf $(TARGET).bin $(TARGET).hex $(TARGET).list
 
-all : gcc
+$(TARGET).elf: $(C_OBJS)
+	$(CC) $(C_OBJS) -o $(TARGET).elf -T lscript
 
 clean :
 	rm -f *.o
@@ -18,33 +28,11 @@ clean :
 	rm -f *.img
 	rm -f *.bc
 
-crt0.o : crt0.s
-	$(ARMGNU)-as crt0.s -o crt0.o
+$(TARGET).list : $(TARGET).elf
+	$(OBJDUMP) -D $(TARGET).elf > $(TARGET).list
 
-gpio.o : gpio.c
-	$(ARMGNU)-gcc $(COPS) -c gpio.c -o gpio.o
+$(TARGET).bin : $(TARGET).elf
+	$(OBJCOPY) $(TARGET).elf -O binary $(TARGET).bin
 
-printf.o : printf.c
-	$(ARMGNU)-gcc $(COPS) -c printf.c -o printf.o
-
-uart.o : uart.c
-	$(ARMGNU)-gcc $(COPS) -c uart.c -o uart.o
-
-startup.o : startup.c
-	$(ARMGNU)-gcc $(COPS) -c startup.c -o startup.o
-
-app.o : app.c
-	$(ARMGNU)-gcc $(COPS) -c app.c -o app.o
-
-string.o : string.c
-	$(ARMGNU)-gcc $(COPS) -c string.c -o string.o
-
-app.elf : lscript crt0.o gpio.o printf.o uart.o startup.o app.o string.o
-	$(ARMGNU)-ld crt0.o startup.o gpio.o printf.o uart.o app.o string.o -T lscript -o app.elf $(LOPS)
-	$(ARMGNU)-objdump -D app.elf > app.list
-
-app.bin : app.elf
-	$(ARMGNU)-objcopy app.elf -O binary app.bin
-
-app.hex : app.elf
-	$(ARMGNU)-objcopy app.elf -O ihex app.hex
+$(TARGET).hex : $(TARGET).elf
+	$(OBJCOPY) $(TARGET).elf -O ihex $(TARGET).hex

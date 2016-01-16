@@ -19,7 +19,7 @@
  * THE SOFTWARE.
  */
 
-#include "gpio.h"
+#include <gpio.h>
 
 const struct pin_info pin_lkp[] =
 { 

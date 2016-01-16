@@ -21,8 +21,7 @@
 
 #define ALIGNMENT		4
 
-#include "object.h"
-#include "periph.h"
+#include <object.h>
 
 extern unsigned int bss_start; 
 extern unsigned int bss_end; 

@@ -19,7 +19,7 @@
  * THE SOFTWARE.
  */
 
-#include "string.h"
+#include <string.h>
 
 static void clear(void *obj)
 {
