@@ -23,6 +23,7 @@
 
 #include <object.h>
 #include <periph.h>
+#include <logger.h>
 
 extern unsigned int bss_start; 
 extern unsigned int bss_end; 
@@ -102,6 +103,14 @@ void c_startup (struct cpu_regs *regs)
 	 */
 	while (bss < bssend)
 		*bss++ = 0;
+
+#ifdef EARLY_DEBUG
+	int i = 0;
+	logger_init();
+	log_printf("register values from boot loader\r\n");
+	for (i = 0; i < 16; i++)
+		log_printf("r%d:0x%x\r\n", i, regs->regs[i]);
+#endif
 
 	while (vstart < vend)
 		*vector_table++ = *vstart++;

@@ -21,13 +21,14 @@
 
 #include <uart.h>
 #include <printf.h>
+#include <logger.h>
 
 #define write(x) _Generic((x),				\
 					unsigned char: write_char, 	\
 					int: write_int,				\
 					default: write_char) (x)
 
-#define NULL (void *)0
+static bool initted = false;
 
 void serialEvent() __attribute__((weak));
 
@@ -45,6 +46,9 @@ static void uart_put(void *arg, char c)
 static void begin(unsigned int baud)
 {
 	unsigned int ra;
+
+	if (initted)
+		return;
 
 	switch (baud) {
 	case 9600:
@@ -87,8 +91,9 @@ static void begin(unsigned int baud)
 	aux_write(AUX_MU_CNTL_REG, 3);
 
 	init_printf(NULL, uart_put);
-}
 
+	initted = true;
+}
 
 #if 0
 static void write_char(unsigned char data)
@@ -143,6 +148,13 @@ static void Serial_init(void *object)
 {
 		Serial *ser = object;
 
+		initted = false;
+#ifdef EARLY_DEBUG
+		begin(115200);
+		/* Serial ready print the logged messages already */
+		while (logger_available())
+			uart_put(NULL, logger_read());
+#endif
 		ser->begin = begin;
 		ser->printf = tfp_printf;
 		ser->read = read;

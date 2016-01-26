@@ -23,6 +23,7 @@
 #define PERIPH_H
 
 #include "object.h"
+#include "types.h"
 
 #define write32(addr, val)	(*(volatile unsigned int *) (addr) = (val))
 #define read32(addr)	(*(volatile unsigned int *) (addr))
