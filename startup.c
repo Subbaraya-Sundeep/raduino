@@ -22,6 +22,7 @@
 #define ALIGNMENT		4
 
 #include <object.h>
+#include <periph.h>
 
 extern unsigned int bss_start; 
 extern unsigned int bss_end; 
@@ -29,6 +30,8 @@ extern unsigned char classes_start;
 extern unsigned char classes_end; 
 extern unsigned char objects_start; 
 extern unsigned char objects_end; 
+extern unsigned int vectors_start; 
+extern unsigned int vectors_end; 
 
 extern void setup(void);
 
@@ -82,17 +85,26 @@ void init_objects_for_class(Class *class)
 	}
 }
 
-void c_startup (void)
+void c_startup (struct cpu_regs *regs)
 {
 	unsigned int *bss = &bss_start;
 	unsigned int *bssend = &bss_end;
+	unsigned int *vstart = &vectors_start;
+	unsigned int *vend = &vectors_end;
 	unsigned char *class_start = &classes_start;
 	unsigned char *class_end = &classes_end;
+	unsigned int *vector_table = (unsigned int *)0x00;
 	Class *class;
 
-	/* Clear BSS */
-	while(bss < bssend)
+	/* 
+	 * Clear BSS ASAP since it looks like zero initialized 
+	 * global variables also go into bss
+	 */
+	while (bss < bssend)
 		*bss++ = 0;
+
+	while (vstart < vend)
+		*vector_table++ = *vstart++;
 
 	while (class_start != class_end)
 	{

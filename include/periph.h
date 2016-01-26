@@ -42,6 +42,10 @@ enum level {
 	HIGH,
 };
 
+struct cpu_regs {
+	unsigned regs[17];
+};
+
 #define IO_BASE				0x3F000000
 
 /* GPIO */

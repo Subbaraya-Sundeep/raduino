@@ -11,7 +11,7 @@ OBJCOPY := arm-xilinx-eabi-objcopy
 OBJDUMP := arm-xilinx-eabi-objdump
 
 CPPFLAGS += $(foreach includedir,$(INCLUDE_DIRS),-I$(includedir))
-CFLAGS += -Wall -O2 -nostdlib -nostartfiles -ffreestanding -std=c11 -lgcc
+CFLAGS += -Wall -O2 -nostdlib -nostartfiles -ffreestanding -fno-delete-null-pointer-checks -std=c11 -lgcc
 ASFLAGS += --warn --fatal-warnings
 
 all: $(TARGET).elf $(TARGET).bin $(TARGET).hex $(TARGET).list

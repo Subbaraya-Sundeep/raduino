@@ -34,6 +34,14 @@ SECTIONS
 		*(.data)
 	} > ram
 
+	vectors :
+	{
+		. = ALIGN(4);
+		vectors_start = .;	
+		*(.vectors)
+		vectors_end = .;
+	} > ram
+
 	classes :
 	{
 		. = ALIGN(4);
