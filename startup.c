@@ -24,6 +24,9 @@
 #include <object.h>
 #include <periph.h>
 #include <logger.h>
+#include <task.h>
+#include <timer.h>
+#include <config.h>
 
 extern unsigned int bss_start; 
 extern unsigned int bss_end; 
@@ -35,6 +38,8 @@ extern unsigned int vectors_start;
 extern unsigned int vectors_end; 
 
 extern void setup(void);
+
+struct cpu_regs bl_regs __data__;
 
 unsigned char *roundup(unsigned char *addr, int alignment)
 {
@@ -86,7 +91,7 @@ void init_objects_for_class(Class *class)
 	}
 }
 
-void c_startup (struct cpu_regs *regs)
+void c_startup (unsigned int *stack)
 {
 	unsigned int *bss = &bss_start;
 	unsigned int *bssend = &bss_end;
@@ -96,6 +101,7 @@ void c_startup (struct cpu_regs *regs)
 	unsigned char *class_end = &classes_end;
 	unsigned int *vector_table = (unsigned int *)0x00;
 	Class *class;
+	struct cpu_regs *regs = &bl_regs;
 
 	/* 
 	 * Clear BSS ASAP since it looks like zero initialized 
@@ -108,8 +114,16 @@ void c_startup (struct cpu_regs *regs)
 	int i = 0;
 	logger_init();
 	log_printf("register values from boot loader\r\n");
-	for (i = 0; i < 16; i++)
+	for (i = 0; i < 13; i++)
 		log_printf("r%d:0x%x\r\n", i, regs->regs[i]);
+
+	log_printf("sp:0x%x\r\n", regs->sp);
+	log_printf("lr:0x%x\r\n", regs->lr);
+	log_printf("pc:0x%x\r\n", regs->pc);
+	log_printf("cpsr:0x%x\r\n", regs->cpsr);
+	log_printf("spsr:0x%x\r\n", regs->spsr);
+	log_printf("cpu is in %s mode\r\n", cpu_mode());
+	log_printf("Stack:%x\r\n", stack);
 #endif
 
 	while (vstart < vend)
@@ -122,5 +136,8 @@ void c_startup (struct cpu_regs *regs)
 		class_start = roundup(class_start + sizeof(Class), ALIGNMENT);
 	}
 
+	tick_init(TICKER_RATE);
+	task_init();
+	sti();
 	setup();
 }

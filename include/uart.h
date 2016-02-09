@@ -42,5 +42,4 @@ typedef struct
 	int (*available)(void);
 } Serial;
 
-
 #endif

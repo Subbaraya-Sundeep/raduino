@@ -26,9 +26,6 @@
 
 #define _ALIGN(x)	__attribute__((aligned((x))))
 
-#define _CLASS_INIT(name)	__attribute__((section(name))) 		\
-							__attribute((aligned(4)))
-
 #define OBJECT(Class, object)	\
 	Class object __attribute__ ((section("objects"))) = {	\
 		.obj = {											\
@@ -42,6 +39,10 @@
 	{	.name = #class_name,											\
 		.obj_init = fn,											\
 	}
+
+
+#define __data__		__attribute__ ((section(".data")))
+#define __packed__		__attribute__ ((packed))
 
 typedef struct 
 {

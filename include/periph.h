@@ -33,6 +33,31 @@
 	volatile unsigned int i; 		\
 	for(i=0; i < 0x100000; i++); })
 
+#define IRQ			0x12
+#define SVC			0x13
+
+#define sti()				__asm__ volatile ("cpsie i")
+#define cli()				__asm__ volatile ("cpsid i")
+#define tomode_svc()		__asm__ volatile ("cps #19")
+#define tomode_irq()		__asm__ volatile ("cps #18")
+
+#define cpu_mode() ({										\
+	unsigned int cpsr;										\
+	__asm__ volatile ("mrs %0, cpsr" : "=r" (cpsr) : );		\
+	char *ptr;												\
+	switch ((cpsr) & 0x1F) {								\
+	case IRQ:												\
+		ptr = "IRQ"; 										\
+		break;												\
+	case SVC:												\
+		ptr = "SVC"; 										\
+		break;												\
+	default:												\
+		ptr = "OTHER";										\
+		break;												\
+	};														\
+	ptr; })
+
 enum mode {
 	INPUT = 0,
 	OUTPUT,
@@ -44,8 +69,14 @@ enum level {
 };
 
 struct cpu_regs {
-	unsigned regs[17];
-};
+	unsigned regs[13]; /* r0 - r12 */
+	unsigned sp; /* r13 */
+	unsigned lr; /* r14 */
+	unsigned pc; /* r15 */
+	unsigned cpsr; /* cpsr */
+	unsigned spsr; /* spsr */
+} __packed__ ;
+
 
 #define IO_BASE				0x3F000000
 
@@ -91,5 +122,39 @@ struct cpu_regs {
 
 #define aux_write(reg, val)		write32(AUX_BASE + (reg), (val))
 #define aux_read(reg)			read32(AUX_BASE + (reg))
+
+/* ARM TIMER */
+#define ARM_TIMER_BASE			(IO_BASE + 0xB400)
+#define ARM_TIMER_LOAD			0x00
+#define ARM_TIMER_VAL			0x04
+#define ARM_TIMER_CTRL			0x08
+#define ARM_TIMER_CLRIRQ		0x0C /* ACK, write to clear */
+#define ARM_TIMER_RAWIRQ		0x10 /* Interrupt pending bit */
+#define ARM_TIMER_MASKIRQ		0x14 /* Interrupt line asserted or not */
+
+#define ARM_TIMER_ON			(1 << 7)
+#define ARM_TIMER_DIV1			0x00
+#define ARM_TIMER_DIV16			0x01
+#define ARM_TIMER_DIV256		0x02
+#define ARM_TIMER_INTEN			(1 << 5)
+#define ARM_TIMER_32BIT			(1 << 1)
+
+#define timer_write(reg, val)	write32(ARM_TIMER_BASE + (reg), (val))
+#define timer_read(reg)			read32(ARM_TIMER_BASE + (reg))
+
+
+/* Interrupt controller */
+
+#define NR_IRQS					1
+
+#define INTC_BASE				(IO_BASE + 0xB200)
+#define INTC_IPR_BASIC			0x00 /* PENDING resgister */
+#define INTC_IER_BASIC			0x18 /* ENABLE register */
+#define INTC_IDR_BASIC			0x24 /* DISABLE register */
+
+#define INTC_TIMER				(1 << 0)
+
+#define intc_write(reg, val)	write32(INTC_BASE + (reg), (val))
+#define intc_read(reg)			read32(INTC_BASE + (reg))
 
 #endif
