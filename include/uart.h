@@ -42,4 +42,6 @@ typedef struct
 	int (*available)(void);
 } Serial;
 
+void fill_rxfifo(void);
+
 #endif

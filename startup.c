@@ -136,8 +136,9 @@ void c_startup (unsigned int *stack)
 		class_start = roundup(class_start + sizeof(Class), ALIGNMENT);
 	}
 
-	tick_init(TICKER_RATE);
-	task_init();
 	sti();
+	task_init();
+	cli();
+	tick_init(TICKER_RATE);
 	setup();
 }

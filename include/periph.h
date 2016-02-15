@@ -33,8 +33,10 @@
 	volatile unsigned int i; 		\
 	for(i=0; i < 0x100000; i++); })
 
-#define IRQ			0x12
-#define SVC			0x13
+#define IRQ_ARM				0x12
+#define SVC_ARM				0x13
+#define IRQ_THUMB			0x32
+#define SVC_THUMB			0x33
 
 #define sti()				__asm__ volatile ("cpsie i")
 #define cli()				__asm__ volatile ("cpsid i")
@@ -45,18 +47,45 @@
 	unsigned int cpsr;										\
 	__asm__ volatile ("mrs %0, cpsr" : "=r" (cpsr) : );		\
 	char *ptr;												\
-	switch ((cpsr) & 0x1F) {								\
-	case IRQ:												\
-		ptr = "IRQ"; 										\
+	switch ((cpsr) & 0x3F) {								\
+	case IRQ_ARM:											\
+		ptr = "IRQ, ARM"; 									\
 		break;												\
-	case SVC:												\
-		ptr = "SVC"; 										\
+	case SVC_ARM:											\
+		ptr = "SVC, ARM"; 									\
+		break;												\
+	case IRQ_THUMB:											\
+		ptr = "IRQ, THUMB"; 								\
+		break;												\
+	case SVC_THUMB:											\
+		ptr = "SVC, THUMB"; 								\
 		break;												\
 	default:												\
 		ptr = "OTHER";										\
 		break;												\
 	};														\
 	ptr; })
+
+#define current_sp() ({										\
+	unsigned int curr;										\
+	__asm__ volatile ("mov %0, sp" : "=r" (curr) : );		\
+	curr; })
+
+#define current_spsr() ({										\
+	unsigned int curr;										\
+	__asm__ volatile ("mrs %0, spsr" : "=r" (curr) : );		\
+	curr; })
+
+#define current_cpsr() ({										\
+	unsigned int curr;										\
+	__asm__ volatile ("mrs %0, cpsr" : "=r" (curr) : );		\
+	curr; })
+
+#define reg(re) ({											\
+	unsigned int curr;										\
+	__asm__ volatile ("mov %0," #re : "=r" (curr) : );		\
+	curr; })
+
 
 enum mode {
 	INPUT = 0,
